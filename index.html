@@ -46,6 +46,10 @@
     });
     window.map = map;
 
+    // scale bar (bottom right) and zoom/compass buttons (top right)
+    map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");
+    map.addControl(new maplibregl.NavigationControl(),"top-right");
+
     map.on("load", () => {
       map.addSource("hard", {
         type: "geojson",
@@ -74,19 +78,6 @@
         source: "hard",
         paint: { "line-color": "#333", "line-width": 0.5 }
       });
-
-      // Popup: type, plus name and use when the feature has them, plus area
-      map.on("click", "hard-fill", (e) => {
-        const p = e.features[0].properties;
-        let html = `<strong>${p.LSHARD_TYPE}</strong>`;
-        if (p.NAME) html += `<br>${p.NAME}`;
-        if (p.LS_CLASS) html += `<br>Use: ${p.LS_CLASS}`;
-        html += `<br>Area: ${Math.round(p["SHAPE.AREA"])} m²`;
-        new maplibregl.Popup().setLngLat(e.lngLat).setHTML(html).addTo(map);
-      });
-
-      map.on("mouseenter", "hard-fill", () => map.getCanvas().style.cursor = "pointer");
-      map.on("mouseleave", "hard-fill", () => map.getCanvas().style.cursor = "");
     });
   </script>
 </body>
