@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>UBC Hard Landscape</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.css">
+  <style>
+    #wrap { position: relative; width: 800px; height: 600px; }
+    #mapid { width: 100%; height: 100%; }
+    #legend {
+      position: absolute; bottom: 10px; left: 10px; z-index: 1;
+      background: white; padding: 8px 12px; border-radius: 6px;
+      font: 13px sans-serif; line-height: 1.6;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    #legend span {
+      display: inline-block; width: 12px; height: 12px;
+      margin-right: 6px; vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Web map here. -->
+  <div id="wrap">
+    <div id="mapid"></div>
+    <div id="legend">
+      <strong>Hard surface type</strong><br>
+      <span style="background:#e9a03b"></span>Pedestrian<br>
+      <span style="background:#6c757d"></span>Driveway<br>
+      <span style="background:#4ea8a0"></span>Concrete<br>
+      <span style="background:#264653"></span>Parking<br>
+      <span style="background:#9b2226"></span>Road<br>
+      <small>Data: UBC Geodata (compiled by McElhanney, 2020–21), PDDL 1.0</small>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as maplibregl from "https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.mjs";
+
+    const map = new maplibregl.Map({
+      container: "mapid",
+      center: [-123.246, 49.261],
+      zoom: 15,
+      style: "https://tiles.openfreemap.org/styles/positron"
+    });
+    window.map = map;
+
+    map.on("load", () => {
+      map.addSource("hard", {
+        type: "geojson",
+        data: "https://raw.githubusercontent.com/UBCGeodata/ubc-geospatial-opendata/master/ubcv/landscape/geojson/ubcv_landscape_hard.geojson"
+      });
+
+      map.addLayer({
+        id: "hard-fill",
+        type: "fill",
+        source: "hard",
+        paint: {
+          "fill-color": ["match", ["get", "LSHARD_TYPE"],
+            "Pedestrian", "#e9a03b",
+            "Driveway",   "#6c757d",
+            "Concrete",   "#4ea8a0",
+            "Parking",    "#264653",
+            "Road",       "#9b2226",
+            "#cccccc"],
+          "fill-opacity": 0.75
+        }
+      });
+
+      map.addLayer({
+        id: "hard-outline",
+        type: "line",
+        source: "hard",
+        paint: { "line-color": "#333", "line-width": 0.5 }
+      });
+
+      // Popup: type, plus name and use when the feature has them, plus area
+      map.on("click", "hard-fill", (e) => {
+        const p = e.features[0].properties;
+        let html = `<strong>${p.LSHARD_TYPE}</strong>`;
+        if (p.NAME) html += `<br>${p.NAME}`;
+        if (p.LS_CLASS) html += `<br>Use: ${p.LS_CLASS}`;
+        html += `<br>Area: ${Math.round(p["SHAPE.AREA"])} m²`;
+        new maplibregl.Popup().setLngLat(e.lngLat).setHTML(html).addTo(map);
+      });
+
+      map.on("mouseenter", "hard-fill", () => map.getCanvas().style.cursor = "pointer");
+      map.on("mouseleave", "hard-fill", () => map.getCanvas().style.cursor = "");
+    });
+  </script>
+</body>
+</html>
+
+
+
